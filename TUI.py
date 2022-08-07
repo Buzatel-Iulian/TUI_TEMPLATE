@@ -1,16 +1,11 @@
 #! /usr/bin/env python
 
-# A Python port of Example 10 from
-# http://www.tldp.org/HOWTO/NCURSES-Programming-HOWTO/keys.html
-
 from TUI_UTIL import *
 from TUI_STRUCT import *
 import curses
 import sys
 
 # Constants
-WIDTH = 22
-HEIGHT = 10
 
 def main(stdscr):
     """ Entry point for example 10
@@ -23,27 +18,7 @@ def main(stdscr):
     screen.clear()
     STATUS = Status(screen, "Use arrow keys to go up and down, Press enter to select a choice")
     count = 0
-    interface = [
-        {
-            "name":"MODS",
-            "win":curses.newwin(HEIGHT, WIDTH, 1, 2),
-            "widgets":[
-                {"text":"TESSELATION","type":"checkbox"},
-                {"text":"CONTOURS","type":"checkbox"},
-                {"text":"MARKS","type":"checkbox"},
-                {"text":"IRISES","type":"checkbox"},
-            ]
-        },
-        {
-            "name":"USED MODEL",
-            "win":curses.newwin(HEIGHT, WIDTH, 1, 23),
-            "widgets":[
-                {"text":"LOAD","type":"button"},
-                {"text":"LOADED MODEL","type":"label"},
-                {"text":"MASK_ON","type":"checkbox"},
-            ]
-        }
-    ]
+    interface = Structure(screen)
 
     #screen.clear()
     curses.noecho()
@@ -54,10 +29,18 @@ def main(stdscr):
     cursor = "   "
     curses.cbreak()  # Line buffering disabled. pass on everything
     screen.refresh()
-    n_menus = len(interface)
+    n_menus = len(interface.interface)
+    prev_max_y, prev_max_x = stdscr.getmaxyx()
 
     while True:
         max_y, max_x = stdscr.getmaxyx()
+        if prev_max_x != max_x or prev_max_y != max_y :
+            screen.clear()
+            interface.start()
+            
+            prev_max_y = max_y
+            prev_max_x = max_x
+
         count += 1
         STATUS.show()
         if cursor == "   ":
@@ -75,35 +58,32 @@ def main(stdscr):
 
         if char == curses.KEY_UP:
             if highlight <= 1:
-                highlight = len(interface[h_menu]["widgets"])
+                highlight = len(interface.interface[h_menu]["widgets"])
             else:
                 highlight = highlight - 1
             screen.refresh()
         elif char == curses.KEY_DOWN:
-            if highlight >= len(interface[h_menu]["widgets"]):
+            if highlight >= len(interface.interface[h_menu]["widgets"]):
                 highlight = 1
             else:
                 highlight = highlight + 1
             screen.refresh()
         elif char == curses.KEY_RIGHT:
-            if h_menu == len(interface)-1:
+            if h_menu == len(interface.interface)-1:
                 h_menu = 0
             else:
                 h_menu = h_menu + 1
             screen.refresh()
         elif char == curses.KEY_LEFT:
             if h_menu == 0 :
-                h_menu = len(interface)-1
+                h_menu = len(interface.interface)-1
             else:
                 h_menu = h_menu - 1
             screen.refresh()
 
         elif char == ord("\n"):  # Enter
-            #ad_str(screen, y, x, "{}".format(screen.getyx()))
             text = read(screen)
             STATUS.update("Given string = " + text)
-            #screen.getch()
-            #screen.refresh()
         elif char == 27 :
             screen.nodelay(True)
             n = screen.getch()
@@ -118,7 +98,7 @@ def main(stdscr):
             screen.refresh()
 
         i = 0
-        for window in interface:
+        for window in interface.interface:
             if h_menu == i :
                 print_menu(window, highlight, True, cursor)
             else :
