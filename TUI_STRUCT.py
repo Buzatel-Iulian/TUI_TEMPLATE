@@ -6,11 +6,17 @@ class Structure:
     def __init__(self, screen):
         self.screen = screen
         self.interface = {}
+        self.fast_keys = {}
+        self.command_keys = {}
+        self.displays = {}
         self.start()
 
 
     def start(self):
         y,x = self.screen.getmaxyx()
+        self.fast_keys = {'1':0, '2':1}
+        self.command_keys = {}
+        self.displays = {}
         self.interface =  [
             {
                 "name":"MODS",

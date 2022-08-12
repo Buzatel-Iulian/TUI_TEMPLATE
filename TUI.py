@@ -52,33 +52,20 @@ def main(stdscr):
             char = screen.getch()
         except:
             pass
-        pressed = True if char != -1 else False
         #screen.clear()
         ad_str(screen, max_y-2, 0, " y={} x={} frame={}".format(max_y, max_x, count))
 
         if char == curses.KEY_UP:
-            if highlight <= 1:
-                highlight = len(interface.interface[h_menu]["widgets"])
-            else:
-                highlight = highlight - 1
+            highlight = len(interface.interface[h_menu]["widgets"]) if highlight <= 1 else highlight - 1
             screen.refresh()
         elif char == curses.KEY_DOWN:
-            if highlight >= len(interface.interface[h_menu]["widgets"]):
-                highlight = 1
-            else:
-                highlight = highlight + 1
+            highlight = 1 if highlight >= len(interface.interface[h_menu]["widgets"]) else highlight + 1
             screen.refresh()
         elif char == curses.KEY_RIGHT:
-            if h_menu == len(interface.interface)-1:
-                h_menu = 0
-            else:
-                h_menu = h_menu + 1
+            h_menu = 0 if h_menu == len(interface.interface)-1 else h_menu + 1
             screen.refresh()
         elif char == curses.KEY_LEFT:
-            if h_menu == 0 :
-                h_menu = len(interface.interface)-1
-            else:
-                h_menu = h_menu - 1
+            h_menu = len(interface.interface)-1 if h_menu == 0 else h_menu - 1
             screen.refresh()
 
         elif char == ord("\n"):  # Enter
@@ -93,8 +80,11 @@ def main(stdscr):
                 break
             screen.nodelay(False)
         else:
-            if pressed:
-                STATUS.update("Character pressed ( %s / %r ) is not a program key" % (char, chr(char)))
+            if char != -1:
+                if chr(char) in interface.fast_keys :
+                    h_menu = interface.fast_keys[chr(char)]
+                else :
+                    STATUS.update("Character pressed ( %s / %r ) is not a program key" % (char, chr(char)))
             screen.refresh()
 
         i = 0

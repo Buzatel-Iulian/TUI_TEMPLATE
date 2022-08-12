@@ -18,8 +18,6 @@ class Status:
         ad_str(self.elem, 0, 0, self.stat, curses.A_STANDOUT)
 
 def print_menu(menu_win, h_, menu_h, _cursor = "   "): #, highlight_y):
-    """ Draw a menu
-    """
     x = 2
     y = 2
     i = 0
@@ -27,9 +25,13 @@ def print_menu(menu_win, h_, menu_h, _cursor = "   "): #, highlight_y):
     curses.init_pair(2, curses.COLOR_RED, curses.COLOR_BLACK)
     #curses.init_pair(3, curses.A_UNDERLINE, curses.COLOR_BLACK)
 
+    # for horizontal placement
+    #  + i * (width/len(menu_win["widgets"]))
+
     for widget in menu_win["widgets"]:
         if menu_h and h_ == i + 1:
             menu_win["win"].attron(curses.color_pair(2))
+            ### put widget diferentiation in different function ###
             if menu_win["widgets"][i]["type"] == "label":
                 ad_str(menu_win["win"], y + i, x, _cursor + menu_win["widgets"][i]["text"] + "  ", curses.A_UNDERLINE)
             else:
