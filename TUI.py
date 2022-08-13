@@ -33,7 +33,10 @@ def main(stdscr):
     prev_max_y, prev_max_x = stdscr.getmaxyx()
 
     while True:
+        w_clean = False
         max_y, max_x = stdscr.getmaxyx()
+        prev_h_menu = h_menu
+        prev_highlight = highlight
         if prev_max_x != max_x or prev_max_y != max_y :
             screen.clear()
             interface.start()
@@ -56,16 +59,28 @@ def main(stdscr):
         ad_str(screen, max_y-2, 0, " y={} x={} frame={}".format(max_y, max_x, count))
 
         if char == curses.KEY_UP:
-            highlight = len(interface.interface[h_menu]["widgets"]) if highlight <= 1 else highlight - 1
+            if interface.interface[h_menu]["type"][0:8] == "vertical":
+                highlight = len(interface.interface[h_menu]["widgets"]) if highlight <= 1 else highlight - 1
+            else:
+                h_menu = len(interface.interface)-1 if h_menu == 0 else h_menu - 1
             screen.refresh()
         elif char == curses.KEY_DOWN:
-            highlight = 1 if highlight >= len(interface.interface[h_menu]["widgets"]) else highlight + 1
+            if interface.interface[h_menu]["type"][0:8] == "vertical":
+                highlight = 1 if highlight >= len(interface.interface[h_menu]["widgets"]) else highlight + 1
+            else:
+                h_menu = 0 if h_menu == len(interface.interface)-1 else h_menu + 1
             screen.refresh()
         elif char == curses.KEY_RIGHT:
-            h_menu = 0 if h_menu == len(interface.interface)-1 else h_menu + 1
+            if interface.interface[h_menu]["type"][0:8] == "vertical":
+                h_menu = 0 if h_menu == len(interface.interface)-1 else h_menu + 1
+            else:
+                highlight = 1 if highlight >= len(interface.interface[h_menu]["widgets"]) else highlight + 1
             screen.refresh()
         elif char == curses.KEY_LEFT:
-            h_menu = len(interface.interface)-1 if h_menu == 0 else h_menu - 1
+            if interface.interface[h_menu]["type"][0:8] == "vertical":
+                h_menu = len(interface.interface)-1 if h_menu == 0 else h_menu - 1
+            else:
+                highlight = len(interface.interface[h_menu]["widgets"]) if highlight <= 1 else highlight - 1
             screen.refresh()
 
         elif char == ord("\n"):  # Enter
@@ -86,13 +101,17 @@ def main(stdscr):
                 else :
                     STATUS.update("Character pressed ( %s / %r ) is not a program key" % (char, chr(char)))
             screen.refresh()
-
+        
+        if prev_h_menu != h_menu or highlight != prev_highlight:
+            if interface.interface[prev_h_menu]["widgets"][prev_highlight-1]["type"] == "label":
+                #screen.clear()
+                w_clean = True
         i = 0
         for window in interface.interface:
             if h_menu == i :
-                print_menu(window, highlight, True, cursor)
+                print_menu(window, highlight, True, cursor, w_clean)
             else :
-                print_menu(window, highlight, False, cursor)
+                print_menu(window, highlight, False, cursor, w_clean)
             i = i + 1
         screen.refresh()
 

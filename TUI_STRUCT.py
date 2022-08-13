@@ -20,8 +20,9 @@ class Structure:
         self.interface =  [
             {
                 "name":"MODS",
+                "type":"vertical",
                 #"win":curses.newwin(HEIGHT, WIDTH, 1, 2),
-                "win":curses.newwin(10, 22, 1, 2),
+                "win":curses.newwin(10, 22, 4, 2),
                 "widgets":[
                     {"text":"TESSELATION","type":"checkbox"},
                     {"text":"CONTOURS","type":"checkbox"},
@@ -31,7 +32,18 @@ class Structure:
             },
             {
                 "name":"USED MODEL",
-                "win":curses.newwin(y - 2, 22, 1, 25),
+                "type":"vertical",
+                "win":curses.newwin(y - 5, 22, 4, 25),
+                "widgets":[
+                    {"text":"LOAD","type":"button"},
+                    {"text":"LOADED MODELhhhhhhhhhhhhhhhhhhhhhhhh","type":"label"},
+                    {"text":"MASK_ON","type":"checkbox"},
+                ]
+            },
+            {
+                #"name":"USED MODEL",
+                "type":"horizontal",
+                "win":curses.newwin(3, x - 4, 1, 2),
                 "widgets":[
                     {"text":"LOAD","type":"button"},
                     {"text":"LOADED MODEL","type":"label"},

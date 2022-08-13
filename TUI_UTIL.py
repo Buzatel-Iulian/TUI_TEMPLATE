@@ -17,33 +17,77 @@ class Status:
         y, x = self.elem.getmaxyx()
         ad_str(self.elem, 0, 0, self.stat, curses.A_STANDOUT)
 
-def print_menu(menu_win, h_, menu_h, _cursor = "   "): #, highlight_y):
-    x = 2
-    y = 2
+def print_menu(menu_win, h_, menu_h, _cursor = "   ", _clean = False): #, highlight_y):
+    x = 1
+    y = 1
     i = 0
+    offset = 0
+    max_y, max_x = menu_win["win"].getmaxyx()
+    
+    if _clean :
+        menu_win["win"].clear()
     menu_win["win"].box(0, 0)
+    if "name" in menu_win:
+        ad_str(menu_win["win"], 0, 1, menu_win["name"], curses.A_REVERSE)
     curses.init_pair(2, curses.COLOR_RED, curses.COLOR_BLACK)
     #curses.init_pair(3, curses.A_UNDERLINE, curses.COLOR_BLACK)
 
     # for horizontal placement
     #  + i * (width/len(menu_win["widgets"]))
+    # HORIZONTAL MENU
+    if menu_win["type"] == "horizontal":
+        for widget in menu_win["widgets"]:
+        
+            if menu_h and h_ == i + 1:
+                menu_win["win"].attron(curses.color_pair(2))
+                ### put widget diferentiation in different function ###
+                if menu_win["widgets"][i]["type"] == "label":
+                    ad_str(menu_win["win"], y, x + offset, _cursor + menu_win["widgets"][i]["text"] + "  ", curses.A_UNDERLINE)
+                else:
+                    ad_str(menu_win["win"], y, x + offset, _cursor + menu_win["widgets"][i]["text"] + " ")
+                menu_win["win"].attroff(curses.color_pair(2))
+            else:
+                if menu_win["widgets"][i]["type"] == "label":
+                    #menu_win["win"].attron(curses.color_pair(3))
+                    ad_str(menu_win["win"], y, x + offset, "   " + menu_win["widgets"][i]["text"]+"   ", curses.A_UNDERLINE)
+                    #menu_win["win"].attroff(curses.color_pair(3))
+                else:
+                    ad_str(menu_win["win"], y, x + offset, "- " + menu_win["widgets"][i]["text"] + " ")
 
+            offset = offset + len(menu_win["widgets"][i]["text"]) + 3
+            i = i + 1
+        menu_win["win"].refresh()
+        return
+
+    # VERTICAL MENU
     for widget in menu_win["widgets"]:
+        
         if menu_h and h_ == i + 1:
             menu_win["win"].attron(curses.color_pair(2))
             ### put widget diferentiation in different function ###
             if menu_win["widgets"][i]["type"] == "label":
-                ad_str(menu_win["win"], y + i, x, _cursor + menu_win["widgets"][i]["text"] + "  ", curses.A_UNDERLINE)
+                ad_str(menu_win["win"], y + offset, x, _cursor + menu_win["widgets"][i]["text"], curses.A_UNDERLINE)
+                aux = len(menu_win["widgets"][i]["text"]) / (max_x)
+                if aux > 1 :
+                    offset = offset + (int)(aux)
             else:
-                ad_str(menu_win["win"], y + i, x, _cursor + menu_win["widgets"][i]["text"] + " ")
+                ad_str(menu_win["win"], y + offset, x, _cursor + menu_win["widgets"][i]["text"] + " ")
             menu_win["win"].attroff(curses.color_pair(2))
         else:
             if menu_win["widgets"][i]["type"] == "label":
                 #menu_win["win"].attron(curses.color_pair(3))
-                ad_str(menu_win["win"], y + i, x, "   " + menu_win["widgets"][i]["text"]+"   ", curses.A_UNDERLINE)
+                aux = len(menu_win["widgets"][i]["text"]) + 8 - max_x
+                if aux <= 0 :
+                    ad_str(menu_win["win"], y + offset, x, menu_win["widgets"][i]["text"], curses.A_UNDERLINE)
+                else:
+                    ad_str(menu_win["win"], y + offset, x, menu_win["widgets"][i]["text"][0:-aux] + "..", curses.A_UNDERLINE)
+                    
                 #menu_win["win"].attroff(curses.color_pair(3))
             else:
-                ad_str(menu_win["win"], y + i, x, "- " + menu_win["widgets"][i]["text"] + " ")
+                ad_str(menu_win["win"], y + offset, x, "- " + menu_win["widgets"][i]["text"] + " ")
+        
+        
+        offset = offset + 1
         i = i + 1
 
     menu_win["win"].refresh()
