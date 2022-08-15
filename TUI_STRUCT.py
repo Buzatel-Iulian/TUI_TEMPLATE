@@ -36,7 +36,7 @@ class Structure:
                 "win":curses.newwin(y - 5, 22, 4, 25),
                 "widgets":[
                     {"text":"LOAD","type":"button"},
-                    {"text":"LOADED MODELhhhhhhhhhhhhhhhhhhhhhhhh","type":"label"},
+                    {"text":"LOADED MODELhhhhhhhhhhhhhhhhhhhhhhhh","type":"text"},
                     {"text":"MASK_ON","type":"checkbox"},
                 ]
             },
@@ -46,7 +46,8 @@ class Structure:
                 "win":curses.newwin(3, x - 4, 1, 2),
                 "widgets":[
                     {"text":"LOAD","type":"button"},
-                    {"text":"LOADED MODEL","type":"label"},
+                    {"text":"LOAD_again","type":"button"},
+                    {"text":"LOADED MODEL","type":"text"},
                     {"text":"MASK_ON","type":"checkbox"},
                 ]
             }

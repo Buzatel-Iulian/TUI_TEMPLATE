@@ -15,6 +15,7 @@ class Status:
         self.show()
     def show(self):
         y, x = self.elem.getmaxyx()
+        self.elem.hline(0, 0, curses.ACS_CKBOARD, x)
         ad_str(self.elem, 0, 0, self.stat, curses.A_STANDOUT)
 
 def print_menu(menu_win, h_, menu_h, _cursor = "   ", _clean = False): #, highlight_y):
@@ -41,15 +42,17 @@ def print_menu(menu_win, h_, menu_h, _cursor = "   ", _clean = False): #, highli
             if menu_h and h_ == i + 1:
                 menu_win["win"].attron(curses.color_pair(2))
                 ### put widget diferentiation in different function ###
-                if menu_win["widgets"][i]["type"] == "label":
-                    ad_str(menu_win["win"], y, x + offset, _cursor + menu_win["widgets"][i]["text"] + "  ", curses.A_UNDERLINE)
+                if menu_win["widgets"][i]["type"] == "text":
+                    ad_str(menu_win["win"], y, x + offset, _cursor + menu_win["widgets"][i]["text"] + " ", curses.A_UNDERLINE)
                 else:
                     ad_str(menu_win["win"], y, x + offset, _cursor + menu_win["widgets"][i]["text"] + " ")
                 menu_win["win"].attroff(curses.color_pair(2))
+                offset += 1
             else:
-                if menu_win["widgets"][i]["type"] == "label":
+                if menu_win["widgets"][i]["type"] == "text":
                     #menu_win["win"].attron(curses.color_pair(3))
-                    ad_str(menu_win["win"], y, x + offset, "   " + menu_win["widgets"][i]["text"]+"   ", curses.A_UNDERLINE)
+                    ad_str(menu_win["win"], y, x + offset," " + menu_win["widgets"][i]["text"] + " ", curses.A_UNDERLINE)
+                    menu_win["win"].addstr(" ") # ugly but still the most efficient fix
                     #menu_win["win"].attroff(curses.color_pair(3))
                 else:
                     ad_str(menu_win["win"], y, x + offset, "- " + menu_win["widgets"][i]["text"] + " ")
@@ -65,7 +68,7 @@ def print_menu(menu_win, h_, menu_h, _cursor = "   ", _clean = False): #, highli
         if menu_h and h_ == i + 1:
             menu_win["win"].attron(curses.color_pair(2))
             ### put widget diferentiation in different function ###
-            if menu_win["widgets"][i]["type"] == "label":
+            if menu_win["widgets"][i]["type"] == "text":
                 ad_str(menu_win["win"], y + offset, x, _cursor + menu_win["widgets"][i]["text"], curses.A_UNDERLINE)
                 aux = len(menu_win["widgets"][i]["text"]) / (max_x)
                 if aux > 1 :
@@ -74,7 +77,7 @@ def print_menu(menu_win, h_, menu_h, _cursor = "   ", _clean = False): #, highli
                 ad_str(menu_win["win"], y + offset, x, _cursor + menu_win["widgets"][i]["text"] + " ")
             menu_win["win"].attroff(curses.color_pair(2))
         else:
-            if menu_win["widgets"][i]["type"] == "label":
+            if menu_win["widgets"][i]["type"] == "text":
                 #menu_win["win"].attron(curses.color_pair(3))
                 aux = len(menu_win["widgets"][i]["text"]) + 8 - max_x
                 if aux <= 0 :
@@ -118,7 +121,7 @@ def read(elem, t_name = "Text Input     ", txt = ""):
             if n == -1:
             # Escape was pressed
                 elem.timeout(REFRESH_RATE)
-                elem.clear()
+                #elem.clear()
                 return orig
             #elem.nodelay(False)
         else:
@@ -130,7 +133,7 @@ def read(elem, t_name = "Text Input     ", txt = ""):
         #elem.refresh()
         win.refresh()
     elem.timeout(REFRESH_RATE)
-    elem.clear()
+    #elem.clear()
     return text
 
 def ad_str(element, y, x, str, style = None ):
@@ -139,6 +142,13 @@ def ad_str(element, y, x, str, style = None ):
             element.addstr(y, x, str, style)
         else:
             element.addstr(y, x, str)
+    except:
+        #print("the screen is likely too small")
+        element.addstr(0, 0, "the screen is likely too small")
+
+def ad_hline(element, y, x, Mrk, l):
+    try:
+        element.hline(y, x, Mrk, l)
     except:
         #print("the screen is likely too small")
         element.addstr(0, 0, "the screen is likely too small")

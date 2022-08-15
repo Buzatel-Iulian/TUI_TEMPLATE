@@ -13,7 +13,7 @@ def main(stdscr):
     highlight = 1
     h_menu = 0
     pressed = False
-
+    cleared = True
     screen = curses.initscr()
     screen.clear()
     STATUS = Status(screen, "Use arrow keys to go up and down, Press enter to select a choice")
@@ -34,18 +34,20 @@ def main(stdscr):
 
     while True:
         w_clean = False
+        #cleared = False
         max_y, max_x = stdscr.getmaxyx()
         prev_h_menu = h_menu
         prev_highlight = highlight
         if prev_max_x != max_x or prev_max_y != max_y :
             screen.clear()
             interface.start()
-            
+            cleared = True
             prev_max_y = max_y
             prev_max_x = max_x
+            STATUS.show()
 
         count += 1
-        STATUS.show()
+        #STATUS.show()
         if cursor == "   ":
             cursor = ">> "
         else :
@@ -56,7 +58,6 @@ def main(stdscr):
         except:
             pass
         #screen.clear()
-        ad_str(screen, max_y-2, 0, " y={} x={} frame={}".format(max_y, max_x, count))
 
         if char == curses.KEY_UP:
             if interface.interface[h_menu]["type"][0:8] == "vertical":
@@ -85,6 +86,9 @@ def main(stdscr):
 
         elif char == ord("\n"):  # Enter
             text = read(screen)
+            #screen.clear()
+            #cleared = True
+            prev_max_x = 0 # (dirty) use to clear and mark cleared at same time
             STATUS.update("Given string = " + text)
         elif char == 27 :
             screen.nodelay(True)
@@ -102,18 +106,29 @@ def main(stdscr):
                     STATUS.update("Character pressed ( %s / %r ) is not a program key" % (char, chr(char)))
             screen.refresh()
         
+        if highlight > len(interface.interface[h_menu]["widgets"]) :
+            highlight = len(interface.interface[h_menu]["widgets"])
+
         if prev_h_menu != h_menu or highlight != prev_highlight:
-            if interface.interface[prev_h_menu]["widgets"][prev_highlight-1]["type"] == "label":
-                #screen.clear()
-                w_clean = True
+            if interface.interface[prev_h_menu]["widgets"][prev_highlight-1]["type"] == "text":
+                aux2, aux = interface.interface[prev_h_menu]["win"].getmaxyx()
+                if len(interface.interface[prev_h_menu]["widgets"][prev_highlight-1]["text"]) > aux :
+                    w_clean = True
+        #cleared = True
         i = 0
         for window in interface.interface:
             if h_menu == i :
                 print_menu(window, highlight, True, cursor, w_clean)
-            else :
+            elif prev_h_menu == i:
                 print_menu(window, highlight, False, cursor, w_clean)
+            elif cleared :
+                print_menu(window, highlight, False, cursor, False)
             i = i + 1
         screen.refresh()
+        cleared = False
+
+        ad_hline(screen, max_y-1, 0, curses.ACS_HLINE, max_x)
+        ad_str(screen, max_y-1, 0, " y/H={} x/W={} frame={} ".format(max_y, max_x, count))
 
     curses.endwin()
 
