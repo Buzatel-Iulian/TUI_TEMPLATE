@@ -115,7 +115,7 @@ def main(stdscr):
             highlight = len(interface.interface[h_menu]["widgets"])
 
         if prev_h_menu != h_menu or highlight != prev_highlight:
-            if interface.interface[prev_h_menu]["widgets"][prev_highlight-1]["type"] in ["text"]:
+            if interface.interface[prev_h_menu]["widgets"][prev_highlight-1]["type"] in ["label"]:
                 if p_w_clean[prev_h_menu]:
                     w_clean[prev_h_menu] = True
         #        aux2, aux = interface.interface[prev_h_menu]["win"].getmaxyx()

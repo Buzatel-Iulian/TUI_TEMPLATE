@@ -43,19 +43,20 @@ def print_menu(menu_win, h_, menu_h, _cursor = "   ", _clean = False): #, highli
             if menu_h and h_ == i + 1:
                 menu_win["win"].attron(curses.color_pair(2))
                 ### put widget diferentiation in different function ###
-                if menu_win["widgets"][i]["type"] == "text":
+                if menu_win["widgets"][i]["type"] == "label":
                     clean = True
                     ad_str(menu_win["win"], y, x + offset, _cursor + menu_win["widgets"][i]["text"] + " ", curses.A_UNDERLINE)
+                    offset += 1
                 else:
                     ad_str(menu_win["win"], y, x + offset, _cursor + menu_win["widgets"][i]["text"] + " ")
                 menu_win["win"].attroff(curses.color_pair(2))
                 offset += 1
             else:
-                if menu_win["widgets"][i]["type"] == "text":
-                    aux = (int)(max_x/5)
+                if menu_win["widgets"][i]["type"] == "label":
+                    aux = (int)(max_x/len(menu_win["widgets"]))
                     aux2 = len(menu_win["widgets"][i]["text"])
                     if aux2 > aux :
-                        ad_str(menu_win["win"], y, x + offset, " " + menu_win["widgets"][i]["text"][0:-aux] + "..", curses.A_UNDERLINE)
+                        ad_str(menu_win["win"], y, x + offset, " " + menu_win["widgets"][i]["text"][0:aux] + "..", curses.A_UNDERLINE)
                         offset = offset - aux2 + aux + 1
                         #clean = True
                     else:
@@ -79,7 +80,7 @@ def print_menu(menu_win, h_, menu_h, _cursor = "   ", _clean = False): #, highli
         if menu_h and h_ == i + 1:
             menu_win["win"].attron(curses.color_pair(2))
             ### put widget diferentiation in different function ###
-            if menu_win["widgets"][i]["type"] == "text":
+            if menu_win["widgets"][i]["type"] == "label":
                 ad_str(menu_win["win"], y + offset, x, _cursor + menu_win["widgets"][i]["text"], curses.A_UNDERLINE)
                 aux = len(menu_win["widgets"][i]["text"]) / (max_x)
                 if aux > 1 :
@@ -89,7 +90,7 @@ def print_menu(menu_win, h_, menu_h, _cursor = "   ", _clean = False): #, highli
                 ad_str(menu_win["win"], y + offset, x, _cursor + menu_win["widgets"][i]["text"] + " ")
             menu_win["win"].attroff(curses.color_pair(2))
         else:
-            if menu_win["widgets"][i]["type"] == "text":
+            if menu_win["widgets"][i]["type"] == "label":
                 #menu_win["win"].attron(curses.color_pair(3))
                 aux = len(menu_win["widgets"][i]["text"]) + 8 - max_x
                 if aux <= 0 :
@@ -108,7 +109,7 @@ def print_menu(menu_win, h_, menu_h, _cursor = "   ", _clean = False): #, highli
     menu_win["win"].refresh()
     return clean
 
-def clean_w(win):
+def clean_win(win):
     my, mx = win.getmaxyx()
 
 def read(elem, t_name = "Text Input     ", txt = ""):
