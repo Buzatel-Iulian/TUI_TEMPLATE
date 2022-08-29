@@ -11,6 +11,12 @@ class Structure:
         self.displays = {}
         self.start()
 
+    def refresh(self):
+        y,x = self.screen.getmaxyx()
+        self.interface = self.interface
+        self.fast_keys = self.fast_keys
+        self.command_keys = self.command_keys
+        self.displays = self.displays
 
     def start(self):
         y,x = self.screen.getmaxyx()
@@ -36,7 +42,7 @@ class Structure:
                 "win":curses.newwin(y - 5, 22, 4, 25),
                 "widgets":[
                     {"text":"LOAD","type":"button"},
-                    {"text":"LOADED MODELhhhhhhhhhhhhhhhhhhhhhhhh","type":"text"},
+                    {"text":"LOADED MODEL⠗⠗hhhhhhhhhhhhhhhhhhhh⠗⠗hh","type":"text"},
                     {"text":"MASK_ON","type":"checkbox"},
                 ]
             },
@@ -47,7 +53,7 @@ class Structure:
                 "widgets":[
                     {"text":"LOAD","type":"button"},
                     {"text":"LOAD_again","type":"button"},
-                    {"text":"LOADED MODEL","type":"text"},
+                    {"text":"LOADED MODELllllllllllllllllllllllllllllllllll","type":"text"},
                     {"text":"MASK_ON","type":"checkbox"},
                 ]
             }

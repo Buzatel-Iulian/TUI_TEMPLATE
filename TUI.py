@@ -19,6 +19,10 @@ def main(stdscr):
     STATUS = Status(screen, "Use arrow keys to go up and down, Press enter to select a choice")
     count = 0
     interface = Structure(screen)
+    w_clean = {}
+    for i in range(len(interface.interface)): w_clean[i]=False
+    p_w_clean = {}
+    for i in range(len(interface.interface)): p_w_clean[i]=False
 
     #screen.clear()
     curses.noecho()
@@ -33,7 +37,7 @@ def main(stdscr):
     prev_max_y, prev_max_x = stdscr.getmaxyx()
 
     while True:
-        w_clean = False
+        #w_clean = False
         #cleared = False
         max_y, max_x = stdscr.getmaxyx()
         prev_h_menu = h_menu
@@ -41,6 +45,7 @@ def main(stdscr):
         if prev_max_x != max_x or prev_max_y != max_y :
             screen.clear()
             interface.start()
+            #interface.refresh()
             cleared = True
             prev_max_y = max_y
             prev_max_x = max_x
@@ -110,19 +115,25 @@ def main(stdscr):
             highlight = len(interface.interface[h_menu]["widgets"])
 
         if prev_h_menu != h_menu or highlight != prev_highlight:
-            if interface.interface[prev_h_menu]["widgets"][prev_highlight-1]["type"] == "text":
-                aux2, aux = interface.interface[prev_h_menu]["win"].getmaxyx()
-                if len(interface.interface[prev_h_menu]["widgets"][prev_highlight-1]["text"]) > aux :
-                    w_clean = True
+            if interface.interface[prev_h_menu]["widgets"][prev_highlight-1]["type"] in ["text"]:
+                if p_w_clean[prev_h_menu]:
+                    w_clean[prev_h_menu] = True
+        #        aux2, aux = interface.interface[prev_h_menu]["win"].getmaxyx()
+        #        if len(interface.interface[prev_h_menu]["widgets"][prev_highlight-1]["text"]) > aux :
+        #            w_clean = True # NEED TO get rid of all of THIS <<< ^^^
         #cleared = True
         i = 0
-        for window in interface.interface:
+        aux = len(interface.interface)
+        #for window in interface.interface:
+        while i < aux :
             if h_menu == i :
-                print_menu(window, highlight, True, cursor, w_clean)
+                p_w_clean[i] = print_menu(interface.interface[i], highlight, True, cursor, w_clean[i])
+                w_clean[i] = False
             elif prev_h_menu == i:
-                print_menu(window, highlight, False, cursor, w_clean)
+                w_clean[i] = print_menu(interface.interface[i], highlight, False, cursor, w_clean[i])
             elif cleared :
-                print_menu(window, highlight, False, cursor, False)
+                w_clean[i] = print_menu(interface.interface[i], highlight, False, cursor, False)
+            #w_clean[i] = False
             i = i + 1
         screen.refresh()
         cleared = False

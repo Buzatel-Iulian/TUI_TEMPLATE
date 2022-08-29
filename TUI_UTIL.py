@@ -23,6 +23,7 @@ def print_menu(menu_win, h_, menu_h, _cursor = "   ", _clean = False): #, highli
     y = 1
     i = 0
     offset = 0
+    clean = False
     max_y, max_x = menu_win["win"].getmaxyx()
     
     if _clean :
@@ -43,6 +44,7 @@ def print_menu(menu_win, h_, menu_h, _cursor = "   ", _clean = False): #, highli
                 menu_win["win"].attron(curses.color_pair(2))
                 ### put widget diferentiation in different function ###
                 if menu_win["widgets"][i]["type"] == "text":
+                    clean = True
                     ad_str(menu_win["win"], y, x + offset, _cursor + menu_win["widgets"][i]["text"] + " ", curses.A_UNDERLINE)
                 else:
                     ad_str(menu_win["win"], y, x + offset, _cursor + menu_win["widgets"][i]["text"] + " ")
@@ -50,8 +52,17 @@ def print_menu(menu_win, h_, menu_h, _cursor = "   ", _clean = False): #, highli
                 offset += 1
             else:
                 if menu_win["widgets"][i]["type"] == "text":
-                    #menu_win["win"].attron(curses.color_pair(3))
-                    ad_str(menu_win["win"], y, x + offset," " + menu_win["widgets"][i]["text"] + " ", curses.A_UNDERLINE)
+                    aux = (int)(max_x/5)
+                    aux2 = len(menu_win["widgets"][i]["text"])
+                    if aux2 > aux :
+                        ad_str(menu_win["win"], y, x + offset, " " + menu_win["widgets"][i]["text"][0:-aux] + "..", curses.A_UNDERLINE)
+                        offset = offset - aux2 + aux + 1
+                        #clean = True
+                    else:
+                        clean = True
+                        ad_str(menu_win["win"], y, x + offset, " " + menu_win["widgets"][i]["text"] + " ", curses.A_UNDERLINE)
+                    
+                    #ad_str(menu_win["win"], y, x + offset," " + menu_win["widgets"][i]["text"] + " ", curses.A_UNDERLINE)
                     menu_win["win"].addstr(" ") # ugly but still the most efficient fix
                     #menu_win["win"].attroff(curses.color_pair(3))
                 else:
@@ -60,7 +71,7 @@ def print_menu(menu_win, h_, menu_h, _cursor = "   ", _clean = False): #, highli
             offset = offset + len(menu_win["widgets"][i]["text"]) + 3
             i = i + 1
         menu_win["win"].refresh()
-        return
+        return clean # you can use an XOR here.. I think
 
     # VERTICAL MENU
     for widget in menu_win["widgets"]:
@@ -72,6 +83,7 @@ def print_menu(menu_win, h_, menu_h, _cursor = "   ", _clean = False): #, highli
                 ad_str(menu_win["win"], y + offset, x, _cursor + menu_win["widgets"][i]["text"], curses.A_UNDERLINE)
                 aux = len(menu_win["widgets"][i]["text"]) / (max_x)
                 if aux > 1 :
+                    clean = True
                     offset = offset + (int)(aux)
             else:
                 ad_str(menu_win["win"], y + offset, x, _cursor + menu_win["widgets"][i]["text"] + " ")
@@ -94,7 +106,10 @@ def print_menu(menu_win, h_, menu_h, _cursor = "   ", _clean = False): #, highli
         i = i + 1
 
     menu_win["win"].refresh()
+    return clean
 
+def clean_w(win):
+    my, mx = win.getmaxyx()
 
 def read(elem, t_name = "Text Input     ", txt = ""):
     elem.timeout(100)
@@ -143,8 +158,10 @@ def ad_str(element, y, x, str, style = None ):
         else:
             element.addstr(y, x, str)
     except:
-        #print("the screen is likely too small")
-        element.addstr(0, 0, "the screen is likely too small")
+        curses.init_pair(3, curses.COLOR_BLACK, curses.COLOR_RED)
+        element.attron(curses.color_pair(3))
+        element.addstr(1, 0, "<overflow>")
+        element.attroff(curses.color_pair(3))
 
 def ad_hline(element, y, x, Mrk, l):
     try:

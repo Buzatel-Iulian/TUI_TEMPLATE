@@ -162,6 +162,10 @@ def main():
 
     sys.exit(0)
 
+def yell(text):
+    return text.upper()
 
 if __name__ == "__main__":
     main()
+    y = yell
+    print(y("heyyyyyyyyyyy"))
