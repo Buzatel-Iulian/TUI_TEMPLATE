@@ -18,6 +18,40 @@ class Status:
         self.elem.hline(0, 0, curses.ACS_CKBOARD, x)
         ad_str(self.elem, 0, 0, self.stat, curses.A_STANDOUT)
 
+def print_button(win, text, y, x, state = True, cursor = " - ", maxL = 15):
+    # state cloud be disabled fo buttons
+    cl = len(cursor)
+    win.attron(curses.color_pair(2))
+    ad_str(win, y, x, cursor)
+    win.attroff(curses.color_pair(2))
+    ad_str(win, y, x + cl, text, curses.A_BOLD)
+    return 0 + cl# specific offset for next element
+def print_label(win, text, y, x, state = True, cursor = "   ", maxL = 15):
+    # nothing for state, its a frkn label
+    cl = len(cursor)
+    win.attron(curses.color_pair(2))
+    ad_str(win, y, x, cursor)
+    win.attroff(curses.color_pair(2))
+    ad_str(win, y, x + cl, " " + text + " ", curses.A_UNDERLINE)
+    return 2 + cl # specific offset for next element
+def print_checkbox(win, text, y, x, state = True, cursor = "   ", maxL = 15):
+    cl = len(cursor)
+    win.attron(curses.color_pair(2))
+    ad_str(win, y, x, cursor)
+    win.attroff(curses.color_pair(2))
+    if state: ad_str(win, y, x + cl, "×") else: ad_str(win, y, x + cl, "¤")
+    ad_str(win, y, x + cl + 1, " " + text)
+    return 1 + cl # specific offset for next element
+def print_slider(win, text, y, x, state = 0, cursor = "   ", maxL = 15):
+    cl = len(cursor)
+    y, x = win.getmaxyx()
+    win.attron(curses.color_pair(2))
+    #ad_str(win, y, x, cursor)
+    win.attroff(curses.color_pair(2))
+    if state: ad_str(win, y, x + cl, "×") else: ad_str(win, y, x + cl, "¤")
+    ad_str(win, y, x + cl + 1, "[" + text + "]")
+    return 2 + cl # specific offset for next element
+
 def print_menu(menu_win, h_, menu_h, _cursor = "   ", _clean = False): #, highlight_y):
     x = 1
     y = 1
@@ -38,6 +72,8 @@ def print_menu(menu_win, h_, menu_h, _cursor = "   ", _clean = False): #, highli
     #  + i * (width/len(menu_win["widgets"]))
     # HORIZONTAL MENU
     if menu_win["type"] == "horizontal":
+        aux = (int)(max_x/len(menu_win["widgets"]))
+
         for widget in menu_win["widgets"]:
         
             if menu_h and h_ == i + 1:
@@ -53,7 +89,7 @@ def print_menu(menu_win, h_, menu_h, _cursor = "   ", _clean = False): #, highli
                 offset += 1
             else:
                 if menu_win["widgets"][i]["type"] == "label":
-                    aux = (int)(max_x/len(menu_win["widgets"]))
+                    #aux = (int)(max_x/len(menu_win["widgets"]))
                     aux2 = len(menu_win["widgets"][i]["text"])
                     if aux2 > aux :
                         ad_str(menu_win["win"], y, x + offset, " " + menu_win["widgets"][i]["text"][0:aux] + "..", curses.A_UNDERLINE)
