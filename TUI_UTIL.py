@@ -42,14 +42,14 @@ def print_checkbox(win, text, y, x, state = True, cursor = "   ", maxL = 15):
     if state: ad_str(win, y, x + cl, "×") else: ad_str(win, y, x + cl, "¤")
     ad_str(win, y, x + cl + 1, " " + text)
     return 1 + cl # specific offset for next element
-def print_slider(win, text, y, x, state = 0, cursor = "   ", maxL = 15):
-    cl = len(cursor)
+def print_slider(win, text, y, x, state = 0, cursor = "", maxL = 15, vertical = False):
+    #cl = len(cursor)
     y, x = win.getmaxyx()
     win.attron(curses.color_pair(2))
     #ad_str(win, y, x, cursor)
     win.attroff(curses.color_pair(2))
-    if state: ad_str(win, y, x + cl, "×") else: ad_str(win, y, x + cl, "¤")
-    ad_str(win, y, x + cl + 1, "[" + text + "]")
+    #if state: ad_str(win, y, x + cl, "×") else: ad_str(win, y, x + cl, "¤")
+    ad_str(win, y, x, "[" + text + "]")
     return 2 + cl # specific offset for next element
 
 def print_menu(menu_win, h_, menu_h, _cursor = "   ", _clean = False): #, highlight_y):
