@@ -15,138 +15,145 @@ class Status:
         self.show()
     def show(self):
         y, x = self.elem.getmaxyx()
-        self.elem.hline(0, 0, curses.ACS_CKBOARD, x)
         ad_str(self.elem, 0, 0, self.stat, curses.A_STANDOUT)
 
-def print_button(win, text, y, x, state = True, cursor = " - ", maxL = 15):
-    # state cloud be disabled fo buttons
-    cl = len(cursor)
-    win.attron(curses.color_pair(2))
-    ad_str(win, y, x, cursor)
-    win.attroff(curses.color_pair(2))
-    ad_str(win, y, x + cl, text, curses.A_BOLD)
-    return 0 + cl# specific offset for next element
-def print_label(win, text, y, x, state = True, cursor = "   ", maxL = 15):
-    # nothing for state, its a frkn label    
-    cl = len(cursor)
-    win.attron(curses.color_pair(2))
-    ad_str(win, y, x, cursor)
-    win.attroff(curses.color_pair(2))
-    ad_str(win, y, x + cl, " " + text + " ", curses.A_UNDERLINE)
-    return 2 + cl # specific offset for next element
-def print_checkbox(win, text, y, x, state = True, cursor = "   ", maxL = 15):
-    cl = len(cursor)
-    win.attron(curses.color_pair(2))
-    ad_str(win, y, x, cursor)
-    win.attroff(curses.color_pair(2))
-    if state: ad_str(win, y, x + cl, "×") else: ad_str(win, y, x + cl, "¤")
-    ad_str(win, y, x + cl + 1, " " + text)
-    return 1 + cl # specific offset for next element
-def print_slider(win, text, y, x, state = 0, cursor = "", maxL = 15, vertical = False):
-    #cl = len(cursor)
-    my, mx = win.getmaxyx()
-    win.attron(curses.color_pair(2))
-    #ad_str(win, y, x, cursor)
-    win.attroff(curses.color_pair(2))
-    #if state: ad_str(win, y, x + cl, "×") else: ad_str(win, y, x + cl, "¤")
-    ad_str(win, y, x, "[" + text + "]")
-    return 2 + cl # specific offset for next element
+class Tui:
+    def __init__(self):
+        self.screen = curses.initscr()
+        self.screen.clear()
+        self.STATUS = Status(self.screen, "Use arrow keys to go up and down, Press enter to select a choice")
+        self.win = []
+        self.sel = 0
+        self.prev_sel = 0
+    def addMenu(self, menu):
+        self.win.append(menu)
+    def handler(self, stdscr):
+        count = 0
+        prev_max_x = 0
+        prev_max_y = 0
+        curses.noecho()
+        curses.curs_set(0)
+        self.screen.scrollok(True)
+        self.screen.keypad(True)
+        self.screen.timeout(REFRESH_RATE)
+        curses.cbreak()  # Line buffering disabled. pass on everything
+        self.screen.refresh()
 
-def print_menu(menu_win, h_, menu_h, _cursor = "   ", _clean = False): #, highlight_y):
-    x = 1
-    y = 1
+        while True:
+            max_y, max_x = stdscr.getmaxyx()
+
+            if prev_max_x != max_x or prev_max_y != max_y :
+                self.screen.clear()
+                self.STATUS.show()
+            prev_max_x = max_x
+            prev_max_y = max_y
+
+            try:
+                char = self.screen.getch()
+            except:
+                pass
+
+            if char == curses.KEY_UP:
+                self.win[self.sel].key_up()
+            elif char == curses.KEY_DOWN:
+                self.win[self.sel].key_down()
+            elif char == ord("\n"):  # Enter
+                self.win[self.sel].function()
+            elif char == 27 :
+                self.screen.nodelay(True)
+                n = self.screen.getch()
+                if n == -1:
+                    # Escape was pressed
+                    self.screen.nodelay(False)
+                    break
+                self.screen.nodelay(False)
+            elif char != -1:
+                for i in range(len(self.win)):
+                    if self.win[i].key == char:
+                        self.prev_sel = self.sel
+                        self.sel = i
+            
+            for i in range(len(self.win)):
+                if i == self.sel or i == self.prev_sel:
+                    self.win[i].show()
+
+            ad_hline(self.screen, max_y-1, 0, curses.ACS_HLINE, max_x)
+            ad_str(self.screen, max_y-1, 0, " y/H={} x/W={} frame={} ".format(max_y, max_x, count))
+            count += 1
+            self.screen.refresh()
+
+        curses.endwin()
+        sys.exit(0)
+    def start(self):
+        curses.wrapper(self.handler)
+
+
+
+class Menu:
+    def __init__(self, elem, HEIGHT, WIDTH, x, y, key):
+        self.win = curses.newwin(HEIGHT, WIDTH, y, x)
+        self.elem = elem
+        self.widgets = []
+        self.key = key
+        self.arrow = 0
+    def addButton(self, button):
+        self.widgets.append(button)
+    def show(self):
+        self.win.box(0, 0)
+        ad_str(self.win, 0, 1, key, curses.A_REVERSE)
+        i=2
+        for b in self.widgets:
+            b.show(i, i==slef.arrow-2)
+            i += 1
+    def function(self):
+        widgets[self.arrow].function()
+    def key_up(self):
+        self.arrow +=1
+    def key_down(self):
+        self.arrow -=1
+
+class Button:
+    def __init__(self, elem, text, func, toggle = False):
+        self.elem = elem
+        self.text = text
+        self.func = func
+        self.toggle = toggle
+        self.onoff = False
+    def function(self):
+        self.func()
+        self.onoff = not(self.onoff)
+    def show(self, x, sel):
+        ad_str(self.elem, x, 2, self.text + (" +" if self.onoff else " -") if toggle else "", curses.A_UNDERLINE if sel else curses.A_DIM)
+
+def print_menu(menu_win, h_, menu_h, _cursor = "   "): #, highlight_y):
+    """ Draw a menu
+    """
+    x = 2
+    y = 2
     i = 0
-    offset = 0
-    clean = False
-    max_y, max_x = menu_win["win"].getmaxyx()
-    
-    if _clean :
-        menu_win["win"].clear()
     menu_win["win"].box(0, 0)
-    if "name" in menu_win:
-        ad_str(menu_win["win"], 0, 1, menu_win["name"], curses.A_REVERSE)
     curses.init_pair(2, curses.COLOR_RED, curses.COLOR_BLACK)
     #curses.init_pair(3, curses.A_UNDERLINE, curses.COLOR_BLACK)
 
-    # for horizontal placement
-    #  + i * (width/len(menu_win["widgets"]))
-    # HORIZONTAL MENU
-    if menu_win["type"] == "horizontal":
-        aux = (int)(max_x/len(menu_win["widgets"]))
-
-        for widget in menu_win["widgets"]:
-        
-            if menu_h and h_ == i + 1:
-                menu_win["win"].attron(curses.color_pair(2))
-                ### put widget diferentiation in different function ###
-                if menu_win["widgets"][i]["type"] == "label":
-                    clean = True
-                    ad_str(menu_win["win"], y, x + offset, _cursor + menu_win["widgets"][i]["text"] + " ", curses.A_UNDERLINE)
-                    offset += 1
-                else:
-                    ad_str(menu_win["win"], y, x + offset, _cursor + menu_win["widgets"][i]["text"] + " ")
-                menu_win["win"].attroff(curses.color_pair(2))
-                offset += 1
-            else:
-                if menu_win["widgets"][i]["type"] == "label":
-                    #aux = (int)(max_x/len(menu_win["widgets"]))
-                    aux2 = len(menu_win["widgets"][i]["text"])
-                    if aux2 > aux :
-                        ad_str(menu_win["win"], y, x + offset, " " + menu_win["widgets"][i]["text"][0:aux] + "..", curses.A_UNDERLINE)
-                        offset = offset - aux2 + aux + 1
-                        #clean = True
-                    else:
-                        clean = True
-                        ad_str(menu_win["win"], y, x + offset, " " + menu_win["widgets"][i]["text"] + " ", curses.A_UNDERLINE)
-                    
-                    #ad_str(menu_win["win"], y, x + offset," " + menu_win["widgets"][i]["text"] + " ", curses.A_UNDERLINE)
-                    menu_win["win"].addstr(" ") # ugly but still the most efficient fix
-                    #menu_win["win"].attroff(curses.color_pair(3))
-                else:
-                    ad_str(menu_win["win"], y, x + offset, "- " + menu_win["widgets"][i]["text"] + " ")
-
-            offset = offset + len(menu_win["widgets"][i]["text"]) + 3
-            i = i + 1
-        menu_win["win"].refresh()
-        return clean # you can use an XOR here.. I think
-
-    # VERTICAL MENU
     for widget in menu_win["widgets"]:
-        
         if menu_h and h_ == i + 1:
             menu_win["win"].attron(curses.color_pair(2))
-            ### put widget diferentiation in different function ###
             if menu_win["widgets"][i]["type"] == "label":
-                ad_str(menu_win["win"], y + offset, x, _cursor + menu_win["widgets"][i]["text"], curses.A_UNDERLINE)
-                aux = len(menu_win["widgets"][i]["text"]) / (max_x)
-                if aux > 1 :
-                    clean = True
-                    offset = offset + (int)(aux)
+                ad_str(menu_win["win"], y + i, x, _cursor + menu_win["widgets"][i]["text"] + "  ", curses.A_UNDERLINE)
             else:
-                ad_str(menu_win["win"], y + offset, x, _cursor + menu_win["widgets"][i]["text"] + " ")
+                ad_str(menu_win["win"], y + i, x, _cursor + menu_win["widgets"][i]["text"] + " ")
             menu_win["win"].attroff(curses.color_pair(2))
         else:
             if menu_win["widgets"][i]["type"] == "label":
                 #menu_win["win"].attron(curses.color_pair(3))
-                aux = len(menu_win["widgets"][i]["text"]) + 8 - max_x
-                if aux <= 0 :
-                    ad_str(menu_win["win"], y + offset, x, menu_win["widgets"][i]["text"], curses.A_UNDERLINE)
-                else:
-                    ad_str(menu_win["win"], y + offset, x, menu_win["widgets"][i]["text"][0:-aux] + "..", curses.A_UNDERLINE)
-                    
+                ad_str(menu_win["win"], y + i, x, "   " + menu_win["widgets"][i]["text"]+"   ", curses.A_UNDERLINE)
                 #menu_win["win"].attroff(curses.color_pair(3))
             else:
-                ad_str(menu_win["win"], y + offset, x, "- " + menu_win["widgets"][i]["text"] + " ")
-        
-        
-        offset = offset + 1
+                ad_str(menu_win["win"], y + i, x, "- " + menu_win["widgets"][i]["text"] + " ")
         i = i + 1
 
     menu_win["win"].refresh()
-    return clean
 
-def clean_win(win):
-    my, mx = win.getmaxyx()
 
 def read(elem, t_name = "Text Input     ", txt = ""):
     elem.timeout(100)
@@ -173,7 +180,7 @@ def read(elem, t_name = "Text Input     ", txt = ""):
             if n == -1:
             # Escape was pressed
                 elem.timeout(REFRESH_RATE)
-                #elem.clear()
+                elem.clear()
                 return orig
             #elem.nodelay(False)
         else:
@@ -185,7 +192,7 @@ def read(elem, t_name = "Text Input     ", txt = ""):
         #elem.refresh()
         win.refresh()
     elem.timeout(REFRESH_RATE)
-    #elem.clear()
+    elem.clear()
     return text
 
 def ad_str(element, y, x, str, style = None ):
