@@ -27,7 +27,7 @@ def print_button(win, text, y, x, state = True, cursor = " - ", maxL = 15):
     ad_str(win, y, x + cl, text, curses.A_BOLD)
     return 0 + cl# specific offset for next element
 def print_label(win, text, y, x, state = True, cursor = "   ", maxL = 15):
-    # nothing for state, its a frkn label
+    # nothing for state, its a frkn label    
     cl = len(cursor)
     win.attron(curses.color_pair(2))
     ad_str(win, y, x, cursor)
@@ -44,7 +44,7 @@ def print_checkbox(win, text, y, x, state = True, cursor = "   ", maxL = 15):
     return 1 + cl # specific offset for next element
 def print_slider(win, text, y, x, state = 0, cursor = "", maxL = 15, vertical = False):
     #cl = len(cursor)
-    y, x = win.getmaxyx()
+    my, mx = win.getmaxyx()
     win.attron(curses.color_pair(2))
     #ad_str(win, y, x, cursor)
     win.attroff(curses.color_pair(2))
