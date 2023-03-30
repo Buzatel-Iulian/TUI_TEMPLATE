@@ -87,12 +87,9 @@ class Tui:
     def start(self):
         curses.wrapper(self.handler)
 
-
-
 class Menu:
-    def __init__(self, elem, HEIGHT, WIDTH, x, y, key):
+    def __init__(self, HEIGHT, WIDTH, x, y, key):
         self.win = curses.newwin(HEIGHT, WIDTH, y, x)
-        self.elem = elem
         self.widgets = []
         self.key = key
         self.arrow = 0
@@ -100,13 +97,12 @@ class Menu:
         self.widgets.append(button)
     def show(self):
         self.win.box(0, 0)
-        ad_str(self.win, 0, 1, key, curses.A_REVERSE)
-        i=2
-        for b in self.widgets:
-            b.show(i, i==slef.arrow-2)
-            i += 1
+        ad_str(self.win, 0, 1, self.key, curses.A_REVERSE)
+        for b in range(len(self.widgets)):
+            self.widgets[b].show(b+2, b==self.arrow)
+        self.win.refresh()
     def function(self):
-        widgets[self.arrow].function()
+        self.widgets[self.arrow].function()
     def key_up(self):
         self.arrow +=1
     def key_down(self):
@@ -123,7 +119,8 @@ class Button:
         self.func()
         self.onoff = not(self.onoff)
     def show(self, x, sel):
-        ad_str(self.elem, x, 2, self.text + (" +" if self.onoff else " -") if toggle else "", curses.A_UNDERLINE if sel else curses.A_DIM)
+        ad_str(self.elem, x, 2, self.text + ((" +" if self.onoff else " -") if self.toggle else ""), curses.A_UNDERLINE if sel else curses.A_DIM)
+        #self.elem.refresh()
 
 def print_menu(menu_win, h_, menu_h, _cursor = "   "): #, highlight_y):
     """ Draw a menu
