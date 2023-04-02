@@ -1,6 +1,7 @@
 
 import curses
 import sys
+import traceback
 # CONSTANTS
 REFRESH_RATE = 500 # ms
 
@@ -15,6 +16,7 @@ class Status:
         self.show()
     def show(self):
         y, x = self.elem.getmaxyx()
+        ad_hline(self.elem, 0, 0, curses.ACS_HLINE, x)
         ad_str(self.elem, 0, 0, self.stat, curses.A_STANDOUT)
 
 class Tui:
@@ -44,9 +46,12 @@ class Tui:
 
             if prev_max_x != max_x or prev_max_y != max_y :
                 self.screen.clear()
+                for i in self.win:
+                    i.reset(stdscr)
+                    #i.show()
                 self.STATUS.show()
-            prev_max_x = max_x
-            prev_max_y = max_y
+                prev_max_x = max_x
+                prev_max_y = max_y
 
             try:
                 char = self.screen.getch()
@@ -69,48 +74,79 @@ class Tui:
                 self.screen.nodelay(False)
             elif char != -1:
                 for i in range(len(self.win)):
-                    if self.win[i].key == char:
+                    if self.win[i].key == chr(char):
                         self.prev_sel = self.sel
                         self.sel = i
             
             for i in range(len(self.win)):
-                if i == self.sel or i == self.prev_sel:
-                    self.win[i].show()
+                #if i == self.sel or i == self.prev_sel:
+                self.win[i].show()
 
             ad_hline(self.screen, max_y-1, 0, curses.ACS_HLINE, max_x)
             ad_str(self.screen, max_y-1, 0, " y/H={} x/W={} frame={} ".format(max_y, max_x, count))
             count += 1
             self.screen.refresh()
 
-        curses.endwin()
+        #curses.endwin() wrapper does this automatically https://stackoverflow.com/questions/48526043/python-curses-unsets-onlcr-and-breaks-my-terminal-how-to-reset-properly
         sys.exit(0)
     def start(self):
-        curses.wrapper(self.handler)
+        # add try block with endwin to handle sudden program fault not reseting console settings
+        try:
+            curses.wrapper(self.handler)
+        except:
+            curses.endwin()
+            print(traceback.format_exc())
 
 class Menu:
-    def __init__(self, HEIGHT, WIDTH, x, y, key):
-        self.win = curses.newwin(HEIGHT, WIDTH, y, x)
+    def __init__(self, HEIGHT, WIDTH, x, y, key, scaling = False):
+        self.scaling = scaling
+        self.HEIGHT = HEIGHT
+        self.WIDTH = WIDTH
+        self.x = x
+        self.y = y
+        #if self.scaling:
+        #    max_y, max_x = stdscr.getmaxyx()
+        #    self.win = curses.newwin(sc(self.HEIGHT, max_y), sc(self.WIDTH, max_x), sc(self.y, max_y), sc(self.x, max_x))
+        #else:
+        self.win = curses.newwin(self.HEIGHT, self.WIDTH, self.y, self.x)
         self.widgets = []
         self.key = key
         self.arrow = 0
     def addButton(self, button):
+        button.elem = self.win
         self.widgets.append(button)
     def show(self):
         self.win.box(0, 0)
-        ad_str(self.win, 0, 1, self.key, curses.A_REVERSE)
+        ad_str(self.win, 0, 1, " "+self.key+" ", curses.A_REVERSE)
         for b in range(len(self.widgets)):
             self.widgets[b].show(b+2, b==self.arrow)
         self.win.refresh()
     def function(self):
         self.widgets[self.arrow].function()
+    def fit(self):
+        aux = len(self.widgets)-1
+        if self.arrow > aux:
+            self.arrow = 0
+        if self.arrow < 0:
+            self.arrow = aux
     def key_up(self):
         self.arrow +=1
+        self.fit()
     def key_down(self):
         self.arrow -=1
+        self.fit()
+    def reset(self, stdscr_):
+        if self.scaling:
+            max_y, max_x = stdscr_.getmaxyx()
+            self.win = curses.newwin(sc(self.HEIGHT, max_y), sc(self.WIDTH, max_x), sc(self.y, max_y), sc(self.x, max_x))
+        else:
+            self.win = curses.newwin(self.HEIGHT, self.WIDTH, self.y, self.x)
+        for b in self.widgets:
+            b.elem = self.win
 
 class Button:
-    def __init__(self, elem, text, func, toggle = False):
-        self.elem = elem
+    def __init__(self, text, func, toggle = False):
+        self.elem = None
         self.text = text
         self.func = func
         self.toggle = toggle
@@ -121,6 +157,14 @@ class Button:
     def show(self, x, sel):
         ad_str(self.elem, x, 2, self.text + ((" +" if self.onoff else " -") if self.toggle else ""), curses.A_UNDERLINE if sel else curses.A_DIM)
         #self.elem.refresh()
+
+class Text:
+    def __init__(self, text = ""):
+        self.elem = None
+        self.text = text
+
+def sc(v_in, v_dim):
+    return int(v_dim*(v_in/100))
 
 def print_menu(menu_win, h_, menu_h, _cursor = "   "): #, highlight_y):
     """ Draw a menu
