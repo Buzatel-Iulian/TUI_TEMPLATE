@@ -80,7 +80,7 @@ class Tui:
             
             for i in range(len(self.win)):
                 #if i == self.sel or i == self.prev_sel:
-                self.win[i].show()
+                self.win[i].show(i==self.sel)
 
             ad_hline(self.screen, max_y-1, 0, curses.ACS_HLINE, max_x)
             ad_str(self.screen, max_y-1, 0, " y/H={} x/W={} frame={} ".format(max_y, max_x, count))
@@ -115,11 +115,17 @@ class Menu:
     def addButton(self, button):
         button.elem = self.win
         self.widgets.append(button)
-    def show(self):
+    def show(self, current):
+        curses.init_pair(2, curses.COLOR_RED, curses.COLOR_BLACK)
         self.win.box(0, 0)
-        ad_str(self.win, 0, 1, " "+self.key+" ", curses.A_REVERSE)
+        if current:
+            self.win.attron(curses.color_pair(2))
+            ad_str(self.win, 0, 1, " "+self.key+" ")
+            self.win.attroff(curses.color_pair(2))
+        else:
+            ad_str(self.win, 0, 1, " "+self.key+" ")
         for b in range(len(self.widgets)):
-            self.widgets[b].show(b+2, b==self.arrow)
+            self.widgets[b].show(b+2, b==self.arrow and current)
         self.win.refresh()
     def function(self):
         self.widgets[self.arrow].function()
@@ -143,32 +149,81 @@ class Menu:
             self.win = curses.newwin(self.HEIGHT, self.WIDTH, self.y, self.x)
         for b in self.widgets:
             b.elem = self.win
+            b.reset(stdscr_)
 
 class Button:
-    def __init__(self, text, func, toggle = False):
+    def __init__(self, text, func):
+        self.elem = None
+        self.text = text
+        self.func = func
+        self.crop = 3
+    def function(self):
+        self.func()
+    def show(self, x, sel):
+        ad_str(self.elem, x, 2, cr(self.text, self.crop), curses.A_UNDERLINE if sel else curses.A_DIM)
+        #self.elem.refresh()
+    def reset(self, stdscr_):
+        aux, self.crop = self.elem.getmaxyx()
+        self.crop -= 3
+
+class Toggle:
+    def __init__(self, text, func = None):
         self.elem = None
         self.text = text
         self.func = func
         self.toggle = toggle
         self.onoff = False
+        self.crop = 3
     def function(self):
         self.func()
         self.onoff = not(self.onoff)
     def show(self, x, sel):
-        ad_str(self.elem, x, 2, self.text + ((" +" if self.onoff else " -") if self.toggle else ""), curses.A_UNDERLINE if sel else curses.A_DIM)
+        ad_str(self.elem, x, 1, ("+" if self.onoff else "-") + cr(self.text, self.crop), curses.A_UNDERLINE if sel else curses.A_DIM)
         #self.elem.refresh()
+    def reset(self, stdscr_):
+        aux, self.crop = self.elem.getmaxyx()
+        self.crop -= 3
+
+class Label:
+    def __init__(self, text = ""):
+        self.elem = None
+        self.stdscr = None
+        self.text = text
+        self.crop = 3
+    def function(self):
+            display(self.text)
+    def reset(self, stdscr_):
+        self.stdscr = stdscr_
+        aux, self.crop = self.elem.getmaxyx()
+        self.crop -= 3
+    def show(self, x, sel):
+        ad_str(self.elem, x, 1, cr(self.text, self.crop), curses.A_UNDERLINE)
 
 class Text:
     def __init__(self, text = ""):
         self.elem = None
+        self.stdscr = None
         self.text = text
+        self.crop = 3
+    def function(self):
+        self.text = read(self.stdscr)
+    def reset(self, stdscr_):
+        self.stdscr = stdscr_
+        aux, self.crop = self.elem.getmaxyx()
+        self.crop -= 3
+    def show(self, x, sel):
+        ad_str(self.elem, x, 2, cr(self.text, self.crop), curses.A_REVERSE)
 
 def sc(v_in, v_dim):
     return int(v_dim*(v_in/100))
 
-def print_menu(menu_win, h_, menu_h, _cursor = "   "): #, highlight_y):
-    """ Draw a menu
-    """
+def cr(str_in, cr_dim):
+    if len(str_in) > cr_dim:
+        return str_in[0:(cr_dim-2)]+".."
+    return str_in
+
+"""def print_menu(menu_win, h_, menu_h, _cursor = "   "): #, highlight_y):
+    
     x = 2
     y = 2
     i = 0
@@ -194,7 +249,47 @@ def print_menu(menu_win, h_, menu_h, _cursor = "   "): #, highlight_y):
         i = i + 1
 
     menu_win["win"].refresh()
+"""
 
+def display(stdscr_, text = "nothing"):
+    stdscr_.timeout(100)
+    y, x = stdscr_.getyx()
+    text = txt
+    orig = txt
+    win = curses.newwin(5, 44, 1, 2)
+    win.box(0, 0)
+    ad_str(win, 1, 1, t_name, curses.A_UNDERLINE)
+    ad_str(win, 2, 1, text, curses.A_DIM)
+    while True:
+        char = elem.getch()
+        if char == ord("\n"):
+            break
+        elif char == curses.KEY_BACKSPACE:
+            text = text[0:-1]
+            win.clear()
+            win.box(0, 0)
+            ad_str(win, 1, 1, t_name, curses.A_UNDERLINE)
+            #win.refresh()
+        elif char == 27 :
+            #elem.nodelay(True)
+            n = elem.getch()
+            if n == -1:
+            # Escape was pressed
+                elem.timeout(REFRESH_RATE)
+                elem.clear()
+                return orig
+            #elem.nodelay(False)
+        else:
+            try:
+                text += chr(char)
+            except:
+                pass
+        ad_str(win, 2, 1, text + "_")
+        #elem.refresh()
+        win.refresh()
+    elem.timeout(REFRESH_RATE)
+    elem.clear()
+    return text
 
 def read(elem, t_name = "Text Input     ", txt = ""):
     elem.timeout(100)
