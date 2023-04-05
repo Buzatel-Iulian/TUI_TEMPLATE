@@ -89,7 +89,7 @@ class Tui:
             self.screen.refresh()
 
         #curses.endwin() wrapper does this automatically https://stackoverflow.com/questions/48526043/python-curses-unsets-onlcr-and-breaks-my-terminal-how-to-reset-properly
-        sys.exit(0)
+        #sys.exit(0)  Not sure why I had this
     def start(self):
         # add try block with endwin to handle sudden program fault not reseting console settings
         try:
@@ -159,7 +159,21 @@ class Menu:
             b.elem = self.win
             b.reset(stdscr_)
 
-class Button:
+class Widget:
+    def __init__(self):
+        return
+    def function(self):
+        return
+    def show(self):
+        return
+    def reset(self):
+        return
+    def key_left(self):
+        return
+    def key_right(self):
+        return
+
+class Button(Widget):
     def __init__(self, text, func):
         self.active = True
         self.elem = None
@@ -181,7 +195,7 @@ class Button:
         aux, self.crop = self.elem.getmaxyx()
         self.crop -= 3
 
-class Toggle:
+class Toggle(Widget):
     def __init__(self, text, func = None):
         self.active = True
         self.elem = None
@@ -206,7 +220,7 @@ class Toggle:
         aux, self.crop = self.elem.getmaxyx()
         self.crop -= 3
 
-class Label:
+class Label(Widget):
     def __init__(self, text = ""):
         self.active = False
         self.elem = None
@@ -222,7 +236,7 @@ class Label:
     def show(self, x, sel):
         ad_str(self.elem, x, 1, cr(self.text, self.crop), curses.A_UNDERLINE)
 
-class Text:
+class Text(Widget):
     def __init__(self, text = ""):
         self.active = True
         self.elem = None
@@ -243,6 +257,30 @@ class Text:
             self.elem.attroff(curses.color_pair(3))
             return
         ad_str(self.elem, x, 2, cr(self.text, self.crop), curses.A_REVERSE)
+
+class Numeric(Widget):
+    def __init__(self, text = "", value = 0):
+        self.active = True
+        self.increment = True
+        self.elem = None
+        self.stdscr = None
+        self.text = text
+        self.value = value
+        self.crop = 3
+    def function(self):
+        return
+    def reset(self, stdscr_):
+        self.stdscr = stdscr_
+        aux, self.crop = self.elem.getmaxyx()
+        self.crop -= 3
+    def show(self, x, sel):
+        ad_str(self.elem, x, 1, cr("<" + self.value + "> " + self.text, self.crop))
+    def key_left(self):
+        self.value += 1
+    def key_right(self):
+        self.value -= 1
+
+
 
 def sc(v_in, v_dim):
     return int(v_dim*(v_in/100))
