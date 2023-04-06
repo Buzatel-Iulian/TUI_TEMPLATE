@@ -62,6 +62,10 @@ class Tui:
                 self.win[self.sel].key_up()
             elif char == curses.KEY_DOWN:
                 self.win[self.sel].key_down()
+            elif char == curses.KEY_LEFT:
+                self.win[self.sel].key_left()
+            elif char == curses.KEY_RIGHT:
+                self.win[self.sel].key_right()
             elif char == ord("\n"):  # Enter
                 self.win[self.sel].function()
                 self.STATUS.show()
@@ -149,6 +153,10 @@ class Menu:
             self.arrow +=1
             self.fit()
         self.fit()
+    def key_left(self):
+        self.widgets[self.arrow].key_left()
+    def key_right(self):
+        self.widgets[self.arrow].key_right()
     def reset(self, stdscr_):
         if self.scaling:
             max_y, max_x = stdscr_.getmaxyx()
@@ -252,6 +260,8 @@ class Text(Widget):
     def show(self, x, sel):
         curses.init_pair(3, curses.COLOR_BLACK, curses.COLOR_RED)
         if sel:
+            aux,l = self.elem.getmaxyx()
+            ad_hline(self.elem, x, 1, " ", l-2)
             self.elem.attron(curses.color_pair(3))
             ad_str(self.elem, x, 2, cr(self.text, self.crop))
             self.elem.attroff(curses.color_pair(3))
@@ -259,13 +269,15 @@ class Text(Widget):
         ad_str(self.elem, x, 2, cr(self.text, self.crop), curses.A_REVERSE)
 
 class Numeric(Widget):
-    def __init__(self, text = "", value = 0):
+    def __init__(self, text = "", value = 0, min_ = 0, max_ = 100):
         self.active = True
         self.increment = True
         self.elem = None
         self.stdscr = None
         self.text = text
         self.value = value
+        self.min_ = min_
+        self.max_ = max_
         self.crop = 3
     def function(self):
         return
@@ -274,11 +286,23 @@ class Numeric(Widget):
         aux, self.crop = self.elem.getmaxyx()
         self.crop -= 3
     def show(self, x, sel):
-        ad_str(self.elem, x, 1, cr("<" + self.value + "> " + self.text, self.crop))
+        curses.init_pair(2, curses.COLOR_RED, curses.COLOR_BLACK)
+        if sel:
+            aux,l = self.elem.getmaxyx()
+            ad_hline(self.elem, x, 1, " ", l-2)
+            self.elem.attron(curses.color_pair(2))
+            ad_str(self.elem, x, 2, cr("<" + str(self.value) + "> " + self.text, self.crop))
+            self.elem.attroff(curses.color_pair(2))
+            return
+        ad_str(self.elem, x, 2, cr("<" + str(self.value) + "> " + self.text, self.crop))
     def key_left(self):
-        self.value += 1
-    def key_right(self):
         self.value -= 1
+        if self.value < self.min_:
+            self.value = self.min_
+    def key_right(self):
+        self.value += 1
+        if self.value > self.max_:
+            self.value = self.max_
 
 
 
@@ -300,6 +324,16 @@ def read(elem, t_name = "Text Input     ", txt = ""):
     ad_str(win, 1, 1, t_name, curses.A_UNDERLINE)
     ad_str(win, 2, 1, text, curses.A_DIM)
     while True:
+        p_y, p_x = max_y, max_x
+        max_y, max_x = elem.getmaxyx()
+        if max_y != p_y or max_x != p_x:
+            elem.clear()
+            win = curses.newwin(sc(30, max_y), sc(80, max_x), sc(35, max_y), sc(10, max_x))
+            win.box(0, 0)
+            ad_str(win, 1, 1, t_name, curses.A_UNDERLINE)
+            elem.refresh()
+            text = text[0:-1]
+            continue
         char = elem.getch()
         if char == ord("\n"):
             break
