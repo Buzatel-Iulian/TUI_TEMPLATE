@@ -117,6 +117,7 @@ class Menu:
         self.widgets = []
         self.key = key
         self.arrow = 0
+        self.index = 0
     def add(self, button):
         button.elem = self.win
         self.widgets.append(button)
@@ -129,8 +130,16 @@ class Menu:
             self.win.attroff(curses.color_pair(2))
         else:
             ad_str(self.win, 0, 1, " "+self.key+" ")
-        for b in range(len(self.widgets)):
-            self.widgets[b].show(b+2, b==self.arrow and current)
+
+        if (len(self.widgets)-1) > (self.HEIGHT - 3):
+        #for b in range(len(self.widgets)):
+            i = 0
+            for b in range(self.index, (self.index + self.HEIGHT - 3)):
+                self.widgets[b].show(i+2, b==self.arrow and current)
+                i += 1
+        else:
+            for b in range(len(self.widgets)):
+                self.widgets[b].show(b+2, b==self.arrow and current)
         self.win.refresh()
     def function(self):
         self.widgets[self.arrow].function()
@@ -138,14 +147,24 @@ class Menu:
         aux = len(self.widgets)-1
         if self.arrow > aux:
             self.arrow = 0
+            self.index = 0
+            return
         if self.arrow < 0:
             self.arrow = aux
+            self.index = aux - (self.HEIGHT - 4)
+            return
+        if self.arrow < self.index:
+            self.index -= 1
+        if self.arrow >= (self.index + self.HEIGHT - 3):
+            self.index += 1
     def key_up(self):
         self.arrow -=1
         while not(self.widgets[self.arrow].active):
             self.arrow -=1
             self.fit()
         self.fit()
+        #if self.arrow < self.index:
+        #    self.index -= 1
     def key_down(self):
         self.arrow +=1
         self.fit()
@@ -153,6 +172,8 @@ class Menu:
             self.arrow +=1
             self.fit()
         self.fit()
+        #if self.arrow >= (self.index + self.HEIGHT - 3):
+        #    self.index += 1
     def key_left(self):
         self.widgets[self.arrow].key_left()
     def key_right(self):
