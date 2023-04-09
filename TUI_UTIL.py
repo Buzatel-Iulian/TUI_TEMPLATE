@@ -103,12 +103,17 @@ class Tui:
             print(traceback.format_exc())
 
 class Menu:
-    def __init__(self, HEIGHT, WIDTH, x, y, key, scaling = False):
+    def __init__(self, h, w, x, y, key, title = "", scaling = False):
         self.scaling = scaling
-        self.HEIGHT = HEIGHT
-        self.WIDTH = WIDTH
+        self.HEIGHT = h
+        self.WIDTH = w
         self.x = x
         self.y = y
+        self.h = h
+        self.w = w
+        self.x_ = x
+        self.y_ = y
+        self.title = title
         #if self.scaling:
         #    max_y, max_x = stdscr.getmaxyx()
         #    self.win = curses.newwin(sc(self.HEIGHT, max_y), sc(self.WIDTH, max_x), sc(self.y, max_y), sc(self.x, max_x))
@@ -124,17 +129,20 @@ class Menu:
     def show(self, current):
         curses.init_pair(2, curses.COLOR_RED, curses.COLOR_BLACK)
         self.win.box(0, 0)
+        clean(self.win)
         if current:
             self.win.attron(curses.color_pair(2))
-            ad_str(self.win, 0, 1, " "+self.key+" ")
+            ad_str(self.win, 0, 1, " "+self.key+":"+self.title+" ")
             self.win.attroff(curses.color_pair(2))
         else:
-            ad_str(self.win, 0, 1, " "+self.key+" ")
+            ad_str(self.win, 0, 1, " "+self.key+":"+self.title+" ")
 
         if (len(self.widgets)-1) > (self.HEIGHT - 3):
+            aux = self.index + self.HEIGHT - 3
+            ad_str(self.win, 1, 1, "["+str(self.index+1)+"-"+str(aux)+"/"+str(len(self.widgets))+"]")
         #for b in range(len(self.widgets)):
             i = 0
-            for b in range(self.index, (self.index + self.HEIGHT - 3)):
+            for b in range(self.index, aux):
                 self.widgets[b].show(i+2, b==self.arrow and current)
                 i += 1
         else:
@@ -181,9 +189,16 @@ class Menu:
     def reset(self, stdscr_):
         if self.scaling:
             max_y, max_x = stdscr_.getmaxyx()
-            self.win = curses.newwin(sc(self.HEIGHT, max_y), sc(self.WIDTH, max_x), sc(self.y, max_y), sc(self.x, max_x))
+            self.HEIGHT = sc(self.h, max_y)
+            self.WIDTH = sc(self.w, max_x)
+            self.x = sc(self.x_, max_x)
+            self.y = sc(self.y_, max_y)
         else:
-            self.win = curses.newwin(self.HEIGHT, self.WIDTH, self.y, self.x)
+            self.HEIGHT = self.h
+            self.WIDTH = self.w
+            self.x = self.x_
+            self.y = self.y_
+        self.win = curses.newwin(self.HEIGHT, self.WIDTH, self.y, self.x)
         for b in self.widgets:
             b.elem = self.win
             b.reset(stdscr_)
@@ -282,7 +297,7 @@ class Text(Widget):
         curses.init_pair(3, curses.COLOR_BLACK, curses.COLOR_RED)
         if sel:
             aux,l = self.elem.getmaxyx()
-            ad_hline(self.elem, x, 1, " ", l-2)
+            #ad_hline(self.elem, x, 1, " ", l-2)
             self.elem.attron(curses.color_pair(3))
             ad_str(self.elem, x, 2, cr(self.text, self.crop))
             self.elem.attroff(curses.color_pair(3))
@@ -310,7 +325,7 @@ class Numeric(Widget):
         curses.init_pair(2, curses.COLOR_RED, curses.COLOR_BLACK)
         if sel:
             aux,l = self.elem.getmaxyx()
-            ad_hline(self.elem, x, 1, " ", l-2)
+            #ad_hline(self.elem, x, 1, " ", l-2)
             self.elem.attron(curses.color_pair(2))
             ad_str(self.elem, x, 2, cr("<" + str(self.value) + "> " + self.text, self.crop))
             self.elem.attroff(curses.color_pair(2))
@@ -360,7 +375,8 @@ def read(elem, t_name = "Text Input     ", txt = ""):
             break
         elif char == curses.KEY_BACKSPACE:
             text = text[0:-1]
-            win.clear()
+            #win.clear()
+            clean(win)
             win.box(0, 0)
             ad_str(win, 1, 1, t_name, curses.A_UNDERLINE)
             #win.refresh()
@@ -384,6 +400,12 @@ def read(elem, t_name = "Text Input     ", txt = ""):
     elem.timeout(REFRESH_RATE)
     elem.clear()
     return text
+
+def clean(element):
+    max_y, max_x = element.getmaxyx()
+    for i in range(max_y-2):
+        ad_hline(element, i+1, 1, " ", max_x-2)
+
 
 def ad_str(element, y, x, str, style = None ):
     try:
