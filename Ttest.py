@@ -1,4 +1,5 @@
 import curses
+import time
 import sys
 from TUI_UTIL import *
 
@@ -38,6 +39,7 @@ menu1.add(text1)
 menu1.add(button2)
 menu1.add(labele)
 menu2.add(button3)
+menu2.add(num1)
 menu3.add(num2)
 menu3.add(num3)
 menu3.add(num4)
@@ -56,3 +58,13 @@ Interface.addMenu(menu2)
 Interface.addMenu(menu3)
 Interface.addMenu(menu4)
 Interface.start()
+aux = True
+while Interface.running:
+    time.sleep(2)
+    if aux:
+        aux = False
+        num1.text = "Hey"
+    else:
+        aux = True
+        num1.text = "There"
+Interface.stop()

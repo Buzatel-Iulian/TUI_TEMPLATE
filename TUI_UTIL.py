@@ -2,6 +2,7 @@
 import curses
 import sys
 import traceback
+from threading import Thread
 # CONSTANTS
 REFRESH_RATE = 500 # ms
 
@@ -27,6 +28,8 @@ class Tui:
         self.win = []
         self.sel = 0
         self.prev_sel = 0
+        self.running = False
+        self.thr = Thread(target = curses.wrapper, args = (self.handler, ))
     def addMenu(self, menu):
         self.win.append(menu)
     def handler(self, stdscr):
@@ -41,7 +44,7 @@ class Tui:
         curses.cbreak()  # Line buffering disabled. pass on everything
         self.screen.refresh()
 
-        while True:
+        while self.running:
             max_y, max_x = stdscr.getmaxyx()
 
             if prev_max_x != max_x or prev_max_y != max_y :
@@ -75,6 +78,7 @@ class Tui:
                 if n == -1:
                     # Escape was pressed
                     self.screen.nodelay(False)
+                    self.running = False
                     break
                 self.screen.nodelay(False)
             elif char != -1:
@@ -95,12 +99,20 @@ class Tui:
         #curses.endwin() wrapper does this automatically https://stackoverflow.com/questions/48526043/python-curses-unsets-onlcr-and-breaks-my-terminal-how-to-reset-properly
         #sys.exit(0)  Not sure why I had this
     def start(self):
+        self.running = True
         # add try block with endwin to handle sudden program fault not reseting console settings
         try:
-            curses.wrapper(self.handler)
+            #curses.wrapper(self.handler)
+            self.thr.start()
+            #self.thr.join()
         except:
             curses.endwin()
             print(traceback.format_exc())
+    def stop(self):
+        #self.thr.terminate()
+        self.running = False
+        self.thr.join()
+        #curses.endwin()
 
 class Menu:
     def __init__(self, h, w, x, y, key, title = "", scaling = False):
